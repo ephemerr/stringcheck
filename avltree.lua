@@ -23,7 +23,7 @@ tree = {
     elseif val < self.key then
       return self.left:search(val)      
     else
-      return self.right:search(val)
+      eturn self.right:search(val)
     end
   end,
 
@@ -85,8 +85,6 @@ tree = {
       newnode = nod.right
     end
     if newnode  then 
---        newnode:out()
-        --newnode:addbalance()
         nod:rebalance(dir)
     end
     return newnode
@@ -173,7 +171,6 @@ tree = {
 
   ------------------------------------------------------
   rotate_left = function(self)    
-    print "left"
     local dad = self.parent
     local bigson = self.right 
 
@@ -198,8 +195,6 @@ tree = {
   
   ------------------------------------------------------
   rotate_right = function(self)    
-    print "right"
-    t:outtree()
     local dad = self.parent
     local bigson = self.left
 
@@ -220,7 +215,6 @@ tree = {
     else
       dad.left = bigson
     end
-    t:outtree()
   end,
 
   ------------------------------------------------------
