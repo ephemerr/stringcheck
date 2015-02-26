@@ -7,7 +7,7 @@ tree = {
 
   SELF = 0,
   LEFT = 1,
-  RIGHT = 2,
+  RIGHT = -1,
 
   ------------------------------------------------------
   new = function(self, o)
@@ -63,7 +63,7 @@ tree = {
     end
     -- search for right predecessor
     dad = self.parent    
-    son = self
+    local son = self
     while dad and son == dad.right do
       if dad == root then
         return nil
@@ -76,7 +76,7 @@ tree = {
 
   ------------------------------------------------------
   insert = function(self, val)
-    nod,dir = self:place(val)
+    local nod,dir = self:place(val)
     if dir == self.LEFT then
       nod.left = tree:new{key = val, parent = nod}
       newnode = nod.left
@@ -84,29 +84,17 @@ tree = {
       nod.right = tree:new{key = val, parent = nod}
       newnode = nod.right
     end
-    if newnode then 
+    if newnode  then 
 --        newnode:out()
-        newnode:addbalance()
-        nod:rebalance()
+        --newnode:addbalance()
+        nod:rebalance(dir)
     end
     return newnode
   end,
 
   ------------------------------------------------------
-  addbalance = function(self)
-    dad = self.parent
-    if not dad or not self:isleaf() then 
-        return 
-    end
-
-    factor = (dad.left == self) and 1 or -1
-    dad.balance = dad.balance + factor
-    return dad:addbalance()
-  end,
-
-  ------------------------------------------------------
   delete = function(self,val)
-    nod = self:search(val)
+    local nod = self:search(val)
     if nod then
     --TODO
     end
@@ -114,7 +102,7 @@ tree = {
 
   ------------------------------------------------------
   foreach = function(self, func)
-    victim = self:minimum()
+    local victim = self:minimum()
     while victim and victim ~= self.parent do
       func(victim)
       victim = victim:successor(self)
@@ -127,9 +115,25 @@ tree = {
   end,
 
   ------------------------------------------------------
-  outtree = function(self)
+  getroot = function(self)
+      root = self
+      while root.parent do
+          root = root.parent
+      end
+      return root
+  end,
+
+  ------------------------------------------------------
+  outbranch = function(self)
     print "__tReE__"
     self:foreach(self.out)
+  end,
+  
+  ------------------------------------------------------
+  outtree = function(self)
+    print "__tReE__"
+    local root = self:getroot()
+    root:foreach(self.out)
   end,
 
   ------------------------------------------------------
@@ -150,9 +154,9 @@ tree = {
   ------------------------------------------------------
   maxheight = function(self)
     max = 0 
-    test_h = function(self)
+    local test_h = function(self)
       if self:isleaf() then 
-        h = self:height()
+        local h = self:height()
         if h > max then
           max = h
         end
@@ -170,8 +174,8 @@ tree = {
   ------------------------------------------------------
   rotate_left = function(self)    
     print "left"
-    dad = self.parent
-    bigson = self.right 
+    local dad = self.parent
+    local bigson = self.right 
 
     self.right = bigson.left
     if self.right then      
@@ -195,8 +199,9 @@ tree = {
   ------------------------------------------------------
   rotate_right = function(self)    
     print "right"
-    dad = self.parent
-    bigson = self.left
+    t:outtree()
+    local dad = self.parent
+    local bigson = self.left
 
     self.left = bigson.right
     if self.left then
@@ -215,91 +220,68 @@ tree = {
     else
       dad.left = bigson
     end
+    t:outtree()
   end,
 
   ------------------------------------------------------
-  rebalance = function(self)
-    dad = self.parent
+  rebalance = function(self, dir)
+    if dir ~= self.RIGHT and dir ~= self.LEFT then error("wrong dir") end
+
+    if self.left and self.right then 
+        self.balance = 0
+        return
+    end
+
+    local dad = self.parent
+    self.balance = (dir == self.RIGHT) and -1 or 1
+
     while dad do
-      -- self is the child of dad whose height increases by 1.
       if self == dad.left then
 
-        if dad.balance == 2 then -- The left column in the picture
-          if self.balance <= 0 then -- Left Right Case
+        if dad.balance == 1 then 
+          if self.balance == -1  then 
+            -- Left Right Case
             self:rotate_left() 
           end
           -- Left Left Case
           dad:rotate_right()
           break 
         end
-        if dad.balance == -2 then
-          dad.balance = -1 -- self’s height increase is absorbed at dad.
+
+        -- no height increase for dad 
+        if dad.balance == -1 then
+          dad.balance = 0 
           break
         end
-        dad.balance = 1 -- Height increases at dad
+        
+        -- Height increases at dad so continue
+        dad.balance = 1 
 
-      else -- self == right_child(dad)
+      else -- self == dad.right
 
-        if dad.balance == -2 then -- The right column in the picture
-          if self.balance >= 0 then -- Right Left Case
+        if dad.balance == -1 then 
+          if self.balance == 1 then 
+            -- Right Left Case
             self:rotate_right() 
           end
           -- Right Right Case
           dad:rotate_left()
           break 
         end
-        if dad.balance == 0 then
-          dad.balance = 1 -- self’s height increase is absorbed at dad.
+
+        -- no height increase for dad 
+        if dad.balance == 1 then
+          dad.balance = 0 
           break 
         end
-        dad.balance = -1 -- Height increases at dad
+        
+        -- Height increases at dad so continue
+        dad.balance = -1 
 
       end
       self = dad
       dad = self.parent
     end
-  end,
-  ------------------------------------------------------
-  rebalance_ = function(self)
-    dad = self.parent
-    while dad do
-      -- self is the child of dad whose height increases by 1.
-      if self == dad.left then
-
-        if dad.balance == 2 then -- The left column in the picture
-          if self.balance <= 0 then -- Left Right Case
-            self:rotate_left() 
-          end
-          -- Left Left Case
-          dad:rotate_right()
-          break 
-        end
-        if dad.balance == -2 then
-          dad.balance = -1 -- self’s height increase is absorbed at dad.
-          break
-        end
-        dad.balance = 1 -- Height increases at dad
-
-      else -- self == right_child(dad)
-
-        if dad.balance == -2 then -- The right column in the picture
-          if self.balance >= 0 then -- Right Left Case
-            self:rotate_right() 
-          end
-          -- Right Right Case
-          dad:rotate_left()
-          break 
-        end
-        if dad.balance == 0 then
-          dad.balance = 1 -- self’s height increase is absorbed at dad.
-          break 
-        end
-        dad.balance = -1 -- Height increases at dad
-
-      end
-      self = dad
-      dad = self.parent
-    end 
   end,
 }
 
@@ -310,7 +292,6 @@ n100 = t:insert(100)
 n_m5 = t:insert(-5)
 n5 = t:insert(5)
 
-t:outtree()
 
 n6 = t:insert(6)
 
