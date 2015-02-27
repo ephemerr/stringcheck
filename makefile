@@ -1,6 +1,6 @@
 
 SRCDIR  = . 
-SOURCES = $(wildcard $(addsuffix /*.c, $(SRCDIR)))
+SOURCES = avlmain.c avltree.c hash.c  
 OBJECTS = $(SOURCES:.c=.o)
 CC		= gcc
 CFLAGS 	= -Wall -Werror 
