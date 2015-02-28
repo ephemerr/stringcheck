@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h> 
 
-#define MAXL 1024
+#define MAXL 2024
 char buf[MAXL+1]={};
 
 int main (int argc, char **argv) {
