@@ -4,22 +4,26 @@
 
 typedef struct node_st * tree_t;
 typedef uint32_t keyval_t;
-
+typedef struct list_st {
+    char* data;
+    struct list_st* next;
+} * list_t;
 struct node_st {
     keyval_t key;
     tree_t parent;
     tree_t left;
     tree_t right;
     int balance;        
+    struct list_st list;
 };
 
 typedef int (*tree_method)(tree_t);
 
-int tree_new( tree_t* self, keyval_t key) ;
+int tree_new( tree_t* self, keyval_t key, char* dat) ;
 int tree_place(const tree_t self, keyval_t val, tree_t* nod, int* dir);
 int tree_setleft(tree_t dad, tree_t son);
 int tree_setright(tree_t dad, tree_t son); 
-int tree_insert(tree_t root, keyval_t val);
+int tree_insert(tree_t root, keyval_t val, char* str);
 int tree_rotleft(tree_t nod);
 int tree_rotright(tree_t nod);
 int tree_has(const tree_t tree, keyval_t val, const char *str);

@@ -2,19 +2,25 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define SELF 0
 #define LEFT 1
 #define RIGHT -1 
 
+static int collisions = 0;
+static int inserts = 0;
+
 // ------------------------------------------------------
-int tree_new( tree_t* self, keyval_t key ) {
-  *self = (tree_t)calloc(1, sizeof (struct node_st));
+int tree_new( tree_t* self, keyval_t key , char* dat) {
+  *self = (tree_t)malloc(sizeof (struct node_st));
   
   int err = (*self != NULL) ? 0 : -1;
   if (err) return err;
 
   (*self)->key = key;
+  (*self)->list.data = dat;
+  (*self)->list.next = NULL;
 
   return err;
 }
@@ -153,6 +159,23 @@ int tree_rotright(tree_t nod) {
 }
 
 // ------------------------------------------------------
+int tree_free(tree_t tree) {
+  int err = tree != NULL ? 0 : 1;
+  if (err) return err;
+  
+  list_t list = tree->list.next;
+   
+  while (list != NULL) {
+    list_t next = list->next;
+    free(list);
+    list = next;
+  }
+  free(tree);
+  tree = NULL;
+  return 0;
+}
+
+// ------------------------------------------------------
 int tree_rebalance(tree_t node, int dir) {
     int err = dir == RIGHT || dir == LEFT ? 0 : -1; 
     if (err) return err;
@@ -212,12 +235,14 @@ int tree_rebalance(tree_t node, int dir) {
 }
 
 // ------------------------------------------------------
-int tree_insert( tree_t root, keyval_t val) {
-  tree_t newnode;
-  tree_t place;
+int tree_insert( tree_t root, keyval_t val, char* dat) {
+  tree_t newnode=NULL;
+  tree_t place=NULL;
   int dir=0;
 
-  int err = tree_new( &newnode, val ) == 0 ? 0 : 1;
+  inserts++;  
+  
+  int err = tree_new( &newnode, val, dat ) == 0 ? 0 : 1;
   if (err) goto FINISH;
 
   err = tree_place(root, val, &place, &dir) == 0 ? 0 : 2;
@@ -225,19 +250,43 @@ int tree_insert( tree_t root, keyval_t val) {
 
   if (dir == LEFT) {
     tree_setleft(place, newnode);
-  } else if (dir == RIGHT) {
+    err = tree_rebalance(place, dir) == 0 ? 0 : 3;
+  } 
+  else if (dir == RIGHT) {
     tree_setright(place, newnode);
+    err = tree_rebalance(place, dir) == 0 ? 0 : 3;
+  } 
+  else if (dir == SELF)  {
+      /// check for collisions
+    list_t thelast = &place->list; 
+    if (strcmp(dat, thelast->data) == 0 ) {
+        err = -1; /// elem found
+        goto FINISH;
+    }
+    while (thelast->next != NULL) {
+        if (strcmp(dat, thelast->data) == 0 ) {            
+            err = -1; /// elem found
+            goto FINISH;
+        }
+        thelast = thelast->next;
+    }
+    collisions++;
+    thelast->next = malloc(sizeof (struct list_st));
+    thelast->next->next = NULL;
+    thelast->next->data = dat;
+    tree_free(newnode);
   } else {
-    return -1; // elem found
+    err = 4;
+    goto FINISH;
   }
-  
-  err = tree_rebalance(place, dir) == 0 ? 0 : 3;
+   
 
 FINISH:
-
   if (err) {
-      //printf ("%s err: %d\n",__func__, err);
+    if (newnode != NULL) tree_free(newnode);
+//    printf ("%s err: %d\n",__func__, err);
   }
+
   return err;
 }
 
@@ -247,14 +296,21 @@ int tree_printnod(tree_t nod) {
   int err = nod != NULL ? 0 : -1;
   if (err) return err;
 
-  printf("%s() parent: %p self: %p key: %x b: %d lr: %p %p \n",__func__, 
-      (void*)nod->parent, 
-      (void*)nod, 
+  printf("%s() parent: %8x key: %x bln: %2d lr: %8x %8x ",__func__, 
+      nod->parent != NULL ? nod->parent->key : 0, 
       nod->key, 
       nod->balance, 
-      (void*)nod->left,
-      (void*)nod->right 
+      nod->left != NULL ? nod->left->key : 0,
+      nod->right != NULL ? nod->right->key : 0 
       );
+  printf("data: %s ", nod->list.data);
+  list_t list = &nod->list;
+  while (list->next) {
+    list = list->next;
+    printf("%s ", list->data);
+  }
+  puts("");
+
   return 0;
 }
 
@@ -340,12 +396,7 @@ int tree_print( const tree_t root ) {
 }
 
 // ------------------------------------------------------
-int tree_free(tree_t tree) {
-  free(tree);
-  return 0;
-}
-
-// ------------------------------------------------------
 int tree_destroy( tree_t root ) {
+ // printf("%s() inserts: %d collisions %d\n",__func__,inserts,collisions);
   return tree_foreach(root, tree_free);
 }
