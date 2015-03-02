@@ -22,7 +22,7 @@ int tree_setright(tree_t dad, tree_t son);
 int tree_insert(tree_t root, keyval_t val);
 int tree_rotleft(tree_t nod);
 int tree_rotright(tree_t nod);
-int tree_has(const tree_t tree, keyval_t val);
+int tree_has(const tree_t tree, keyval_t val, const char *str);
 int tree_printnod(tree_t nod);
 int tree_min(const tree_t root, tree_t* min); 
 int tree_next(const tree_t nod, tree_t* next);

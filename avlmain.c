@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
 
     int len = strlen(buf);
     keyval_t hashcode = jenkins_one_at_a_time_hash(buf, len);
-    int found = tree_has(t, hashcode);
+    int found = tree_has(t, hashcode, buf);
     printf("%s\n", found ? "YES" : "NO");
   } while(1);
 

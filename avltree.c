@@ -52,12 +52,21 @@ int tree_place(const tree_t self, keyval_t val, tree_t* nod, int* dir) {
 }
 
 // ------------------------------------------------------
-int tree_has(const tree_t tree, keyval_t val) {
-  tree_t tmp=NULL;
+int tree_has(const tree_t tree, keyval_t val, const char *str) {
+  tree_t found=NULL;
   int dir=0;
-  int err = tree_place(tree, val, &tmp, &dir);
-  if (err || dir != SELF) return 0;  
-  return 1;
+  int err = tree_place(tree, val, &found, &dir);
+  if (err || found == NULL) return -1;
+  if (dir != SELF) return 0;  
+
+  list_t list = &found->list;
+  while  (list != NULL) {
+    if (list->data == NULL) return -2;
+    if (strcmp(list->data, str) == 0) return 1;
+    list = list->next;
+  }
+
+  return 0;
 }
 
 // ------------------------------------------------------
